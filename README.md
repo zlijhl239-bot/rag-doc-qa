@@ -11,6 +11,9 @@
    <img width="860" height="270" alt="image" src="https://github.com/user-attachments/assets/75a294ce-dda7-45c4-b76c-a4bb88ca3172" />
    问题5.如果数据有目录等没有用的内容，我在加载前是不是应该先对它进行处理？
    <img width="860" height="275" alt="image" src="https://github.com/user-attachments/assets/3a433609-d809-4199-bf52-084de389a735" />
+   问题6.怎么确定现在的切分策略比较好？
+   <img width="456" height="670" alt="image" src="https://github.com/user-attachments/assets/4a04e317-44b5-4c14-8510-03825e8a5a13" />
+
 
 
    
