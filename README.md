@@ -14,6 +14,7 @@
    问题6.怎么确定现在的切分策略比较好？
    <img width="456" height="670" alt="image" src="https://github.com/user-attachments/assets/4a04e317-44b5-4c14-8510-03825e8a5a13" />
 ## DAY2
+<<<<<<< HEAD
   1.建立索引库和BM25关键词库
   对于2份PDF是可以进行embedding的，但是对于多份就不行。->进行了增量版的建库（每次建库之前要删除原来的chroma旧库）
   
@@ -59,6 +60,13 @@
 
 
 
+=======
+  1.实现了检索建库
+  对于2份PDF是可以进行embedding的，但是对于多份就不行。->进行了增量版的建库（每次建库之前要删除原来的chroma旧库）
+  问题1.切片时候的 overlap 后续是怎么用的？
+  在切分那一刻就已经 "复制" 进相邻两个 chunk 的文本里了，从此跟着 chunk 走完全程
+  ![alt text](image.png)
+>>>>>>> fe9c282 (Day2: Chroma+BM25混合检索+父文档检索)
 
 
 
