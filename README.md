@@ -45,6 +45,10 @@
    问题6.BM25建的库放在哪儿，他和向量索引库合并吗？
    
    <img width="650" height="265" alt="image" src="https://github.com/user-attachments/assets/180ee876-02e1-4a25-acc2-880681959877" />
+
+   问题7.之前embedding5个PDF文件会出错，现在修改了：
+   <img width="761" height="185" alt="image" src="https://github.com/user-attachments/assets/961cc564-be6e-444f-b7a3-03d112872479" />
+   <img width="890" height="119" alt="image" src="https://github.com/user-attachments/assets/5cbdfc1d-6109-420b-bc2a-71b2e75c3bb8" />
    
    2. 实现混合检索：向量召回负责语义相似，BM25 负责关键词精确，取并集后通过 parent_idx 映射到父块，返回完整上下文给生成阶段
       问题1.这里的top_k是怎么确定的？
