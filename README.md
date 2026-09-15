@@ -54,19 +54,21 @@
    2. 实现混合检索：向量召回负责语义相似，BM25 负责关键词精确，取并集后通过 parent_idx 映射到父块，返回完整上下文给生成阶段
       问题1.这里的top_k是怎么确定的？
       <img width="890" height="145" alt="image" src="https://github.com/user-attachments/assets/613ded33-75b5-4156-82c6-cb26689f0e90" />
+## DAY 3
+  1.进行召回评测：正确答案所在的段落**是否被检索回来**用命中率来评判：Hit Rate（命中率）= 评测问题里，检索系统成功 "找到答案所在位置" 的比例
+  问题1. 召回的结果0条命中，原因：观察到所有命中页都集中在文档开头，定位到父块存储结构错位（父块被按小块重复存储），重建索引后恢复正常
+  <img width="1075" height="675" alt="image" src="https://github.com/user-attachments/assets/3b5f5232-aef2-4cb5-a013-8cfdb246c816" />
+  问题2. q001 gold[5,33,62] 命中页[0,0,7,7,9]，但是不同的公司在不同的PDF，他怎么知道是哪个PDF？
+  解决：后来在代码里面加了精准到文档里的结果，因为metadata里面有source，要进行匹配，但是后面出现了hit rate=0的情况，因为source加了详细的路径，所以没有检索到，用endswith（只看结尾文件名）解决。
+  <img width="1260" height="149" alt="image" src="https://github.com/user-attachments/assets/ca5e31af-4d70-436f-86bb-9c68f4b8b649" />
+  问题3.结果出现漏选的情况
+  <img width="785" height="220" alt="image" src="https://github.com/user-attachments/assets/3ccb125d-59fb-4ce9-b0bb-036b1c422ab1" />
 
-      
-   
 
+  
 
-
-=======
-  1.实现了检索建库
-  对于2份PDF是可以进行embedding的，但是对于多份就不行。->进行了增量版的建库（每次建库之前要删除原来的chroma旧库）
-  问题1.切片时候的 overlap 后续是怎么用的？
-  在切分那一刻就已经 "复制" 进相邻两个 chunk 的文本里了，从此跟着 chunk 走完全程
-  ![alt text](image.png)
->>>>>>> fe9c282 (Day2: Chroma+BM25混合检索+父文档检索)
+  
+  
 
 
 
