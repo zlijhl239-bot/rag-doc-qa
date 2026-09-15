@@ -220,3 +220,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 >>>>>>> 296321658db70263f5b386998c6cd31dd328aeb8
+chroma_db/
+data/*.pkl
+data/pdf_reports/
