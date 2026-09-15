@@ -1,7 +1,7 @@
 ## DAY 1
    用langchain＋Olloma实现，对数据进行了加载，进行了文档切分为chunk处理，主要用到了：父子切割和语义切割，这里语义切分用到了embedding 模型（omic-embed-text）对句子之间进行相似度的计算，从而提高了切分的准确性。
    问题1.对于PDF文件中出现的表格处理不当，这里用到的pypdf会让表格乱序。
-   <img width="819" height="355" alt="image" src="https://github.com/user-attachments/assets/1697bfb7-af8f-4012-a5ad-ce7444f52b82" 
+   <img width="819" height="355" alt="image" src="https://github.com/user-attachments/assets/1697bfb7-af8f-4012-a5ad-ce7444f52b82" />
    <img width="826" height="384" alt="image" src="https://github.com/user-attachments/assets/8baacf00-2af6-43d7-9d81-6cf640ed18c0" />
    问题2.这里embedding模型的选择会影响我的结果吗？
    <img width="846" height="451" alt="image" src="https://github.com/user-attachments/assets/60a9a98b-d940-4920-93fa-272a2f81d06c" />
@@ -13,6 +13,12 @@
    <img width="860" height="275" alt="image" src="https://github.com/user-attachments/assets/3a433609-d809-4199-bf52-084de389a735" />
    问题6.怎么确定现在的切分策略比较好？
    <img width="456" height="670" alt="image" src="https://github.com/user-attachments/assets/4a04e317-44b5-4c14-8510-03825e8a5a13" />
+## DAY2
+  1.实现了检索建库
+  对于2份PDF是可以进行embedding的，但是对于多份就不行。->进行了增量版的建库（每次建库之前要删除原来的chroma旧库）
+  问题1.切片时候的 overlap 后续是怎么用的？
+  在切分那一刻就已经 "复制" 进相邻两个 chunk 的文本里了，从此跟着 chunk 走完全程
+  <img width="550" height="711" alt="image" src="https://github.com/user-attachments/assets/125ea6cd-dc87-4820-b5f4-b7155e5f73e3" />
 
 
 
