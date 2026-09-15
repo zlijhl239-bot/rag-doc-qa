@@ -1,13 +1,24 @@
 """
-retriever.py — 检索：混合召回 + 父文档检索（Day2）
-query → 向量top10 + BM25 top10 → 合并去重 → 映射父chunk → 返回上下文
+retriever.py — 检索：混合召回 + RRF融合 + 父文档检索（Day3 v4）
+query → 向量topK + BM25 topK(词干化) → 公司过滤(可选) → RRF融合排序 → 映射父chunk → 返回上下文
+v4 改动：
+  - BM25 词干化（PorterStemmer）：revenues→revenu, banking→bank, employees→employe
+    （修复"Revenues vs revenue"、"banking vs bank"这类大小写/词形匹配不上的问题）
+  - 必须与 rebuild_bm25_stem.py 建库时完全一致的 tokenize 逻辑
 """
-import os, pickle, heapq
+import os, pickle, heapq, re
+from nltk.stem import PorterStemmer
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 
 CHROMA_DIR = "./chroma_db"
 CHUNK_DIR = "./data"
+
+_stemmer = PorterStemmer()
+
+def _tokenize(text):
+    """与 rebuild_bm25_stem.py 完全一致的词干化分词"""
+    return [_stemmer.stem(t) for t in re.findall(r"[a-z0-9]+", text.lower())]
 
 def load_index():
     emb = OllamaEmbeddings(model="nomic-embed-text")
@@ -20,27 +31,46 @@ def load_index():
         bm25 = pickle.load(f)
     return vectorstore, parent_chunks, small_meta, bm25
 
-def search(query, top_k=10):
+def retrieve_parents(query, top_k=20, vectorstore=None, parent_chunks=None, small_meta=None, bm25=None, company=None):
+    """混合召回 + 公司过滤(可选) + RRF融合 → 返回 (top索引, 父chunk列表, 完整融合排序)"""
+    # ① 向量召回（已按距离升序，最相似在前）
+    vec = vectorstore.similarity_search_with_score(query, k=top_k)
+    vec_ranked = [r[0].metadata["parent_idx"] for r in vec]
+
+    # ② BM25 召回（词干化：与建库时一致）
+    tokens = _tokenize(query)
+    scores = bm25.get_scores(tokens)
+    bm25_ranked = [small_meta["parent_idx"][i] for i in
+                   heapq.nlargest(top_k, range(len(scores)), key=lambda i: scores[i])]
+
+    # ③ 公司过滤（消融实验用，可选）
+    if company:
+        allowed = {i for i, p in enumerate(parent_chunks)
+                   if str(p.metadata.get("source", "")).endswith(company + ".pdf")}
+        vec_ranked = [pid for pid in vec_ranked if pid in allowed]
+        bm25_ranked = [pid for pid in bm25_ranked if pid in allowed]
+
+    # ④ RRF 融合
+    K = 60
+    fusion = {}
+    for rank, pid in enumerate(vec_ranked):
+        fusion[pid] = fusion.get(pid, 0) + 1.0 / (K + rank + 1)
+    for rank, pid in enumerate(bm25_ranked):
+        fusion[pid] = fusion.get(pid, 0) + 1.0 / (K + rank + 1)
+
+    # ⑤ 完整融合排序 + 取前5
+    ranked_all = [pid for pid, _ in sorted(fusion.items(), key=lambda x: -x[1])]
+    top = ranked_all[:10]
+    return top, [parent_chunks[i] for i in top], ranked_all
+
+def search(query, top_k=20):
+    """交互用：query → 返回 (索引, 上下文)"""
     vectorstore, parent_chunks, small_meta, bm25 = load_index()
-
-    # ① 向量召回 → 命中小chunk的父chunk索引
-    vec_results = vectorstore.similarity_search_with_score(query, k=top_k)
-    vec_parents = [r[0].metadata["parent_idx"] for r in vec_results]
-    print(f"[向量] 命中 {len(set(vec_parents))} 个父chunk")
-
-    # ② BM25 召回
-    scores = bm25.get_scores(query.split())
-    bm25_top = heapq.nlargest(top_k, range(len(scores)), key=lambda i: scores[i])
-    bm25_parents = [small_meta["parent_idx"][i] for i in bm25_top]
-    print(f"[BM25] 命中 {len(set(bm25_parents))} 个父chunk")
-
-    # ③ 合并去重（混合召回）
-    merged = sorted(set(vec_parents) | set(bm25_parents))
-    print(f"[混合] 共 {len(merged)} 个父chunk 候选")
-
-    # ④ ★父文档检索：返回父chunk内容
-    context = [parent_chunks[i].page_content for i in merged[:5]]
-    return merged[:5], context
+    idxs, parents, _ = retrieve_parents(query, top_k=top_k, vectorstore=vectorstore,
+                                        parent_chunks=parent_chunks, small_meta=small_meta, bm25=bm25)
+    print(f"[RRF] 取前 {len(idxs)} 个父chunk: {idxs}")
+    context = [p.page_content for p in parents]
+    return idxs, context
 
 if __name__ == "__main__":
     queries = [

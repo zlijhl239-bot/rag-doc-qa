@@ -45,11 +45,11 @@ for fi, fname in enumerate(pdf_files):
 
     start = len(all_parents)          # 这份PDF的父chunk起始全局索引
     for p_idx, p in enumerate(parents):
+        all_parents.append(p)
         subs = small_splitter.split_documents([p])
         for s in subs:
             s.metadata["parent_idx"] = start + p_idx   # ★ 全局父chunk索引
             s.metadata["source"] = fname
-            all_parents.append(p)                      # 父chunk按全局顺序存一份
             parent_of_small.append(start + p_idx)
             corpus.append(s.page_content)              # 与上面同步，保证顺序一致
         if subs:
